@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Tue, 15 Aug 2023 20:01:26 +0900
+Subject: [PATCH] Shuvi Configs and Commands
+
+
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 916b9a9f05c0e83109bc9a4eb1692e2ed6e81eaf..ff0fa7cb1ccfc55902323517c95b7f85bb011704 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2042,6 +2042,10 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+         }
+         // Purpur end
+ 
++        public @NotNull org.bukkit.configuration.file.YamlConfiguration getShuviConfig() {
++            throw new UnsupportedOperationException("Not supported yet.");
++        }
++
+         /**
+          * Sends the component to the player
+          *

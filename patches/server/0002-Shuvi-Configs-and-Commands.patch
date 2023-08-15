@@ -1,0 +1,446 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Tue, 15 Aug 2023 20:01:25 +0900
+Subject: [PATCH] Shuvi Configs and Commands
+
+
+diff --git a/src/main/java/dareharu/shuvi/ShuviConfig.java b/src/main/java/dareharu/shuvi/ShuviConfig.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..82f88cabadeaa2ea3f677aeaea31c6129b2e406b
+--- /dev/null
++++ b/src/main/java/dareharu/shuvi/ShuviConfig.java
+@@ -0,0 +1,151 @@
++package dareharu.shuvi;
++
++import com.google.common.base.Throwables;
++import com.google.common.collect.ImmutableMap;
++import dareharu.shuvi.command.ShuviCommand;
++import net.minecraft.server.MinecraftServer;
++import net.minecraft.world.level.block.Blocks;
++import org.bukkit.Bukkit;
++import org.bukkit.command.Command;
++import org.bukkit.configuration.ConfigurationSection;
++import org.bukkit.configuration.InvalidConfigurationException;
++import org.bukkit.configuration.file.YamlConfiguration;
++
++import java.io.File;
++import java.io.IOException;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.lang.reflect.Modifier;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.logging.Level;
++
++@SuppressWarnings("unused")
++public final class ShuviConfig {
++    private static final String HEADER = "This is the main configuration file for Shuvi.\n"
++        + "As you can see, there's tons to configure. Some options may impact gameplay, so use\n"
++        + "with caution, and make sure you know what each option does before configuring. \n";
++    private static File CONFIG_FILE;
++    public static YamlConfiguration config;
++
++    private static Map<String, Command> commands;
++
++    public static int version;
++    static boolean verbose;
++
++    public static void init(File configFile) {
++        CONFIG_FILE = configFile;
++        config = new YamlConfiguration();
++        try {
++            config.load(CONFIG_FILE);
++        } catch (IOException ignore) {
++        } catch (InvalidConfigurationException ex) {
++            Bukkit.getLogger().log(Level.SEVERE, "Could not load shuvi.yml, please correct your syntax errors", ex);
++            throw Throwables.propagate(ex);
++        }
++        config.options().header(HEADER);
++        config.options().copyDefaults(true);
++        verbose = getBoolean("verbose", false);
++
++        commands = new HashMap<>();
++        commands.put("shuvi", new ShuviCommand("shuvi"));
++
++        version = getInt("config-version", 1);
++        set("config-version", 1);
++
++        readConfig(ShuviConfig.class, null);
++
++        Blocks.rebuildCache();
++    }
++
++    protected static void log(String s) {
++        if (verbose) {
++            log(Level.INFO, s);
++        }
++    }
++
++    protected static void log(Level level, String s) {
++        Bukkit.getLogger().log(level, s);
++    }
++
++    public static void registerCommands() {
++        for (Map.Entry<String, Command> entry : commands.entrySet()) {
++            MinecraftServer.getServer().server.getCommandMap().register(entry.getKey(), "Purpur", entry.getValue());
++        }
++    }
++
++    static void readConfig(Class<?> clazz, Object instance) {
++        for (Method method : clazz.getDeclaredMethods()) {
++            if (Modifier.isPrivate(method.getModifiers())) {
++                if (method.getParameterTypes().length == 0 && method.getReturnType() == Void.TYPE) {
++                    try {
++                        method.setAccessible(true);
++                        method.invoke(instance);
++                    } catch (InvocationTargetException ex) {
++                        throw Throwables.propagate(ex.getCause());
++                    } catch (Exception ex) {
++                        Bukkit.getLogger().log(Level.SEVERE, "Error invoking " + method, ex);
++                    }
++                }
++            }
++        }
++
++        try {
++            config.save(CONFIG_FILE);
++        } catch (IOException ex) {
++            Bukkit.getLogger().log(Level.SEVERE, "Could not save " + CONFIG_FILE, ex);
++        }
++    }
++
++    private static void set(String path, Object val) {
++        config.addDefault(path, val);
++        config.set(path, val);
++    }
++
++    private static String getString(String path, String def) {
++        config.addDefault(path, def);
++        return config.getString(path, config.getString(path));
++    }
++
++    private static boolean getBoolean(String path, boolean def) {
++        config.addDefault(path, def);
++        return config.getBoolean(path, config.getBoolean(path));
++    }
++
++    private static double getDouble(String path, double def) {
++        config.addDefault(path, def);
++        return config.getDouble(path, config.getDouble(path));
++    }
++
++    private static int getInt(String path, int def) {
++        config.addDefault(path, def);
++        return config.getInt(path, config.getInt(path));
++    }
++
++    private static <T> List getList(String path, T def) {
++        config.addDefault(path, def);
++        return config.getList(path, config.getList(path));
++    }
++
++    static Map<String, Object> getMap(String path, Map<String, Object> def) {
++        if (def != null && config.getConfigurationSection(path) == null) {
++            config.addDefault(path, def);
++            return def;
++        }
++        return toMap(config.getConfigurationSection(path));
++    }
++
++    private static Map<String, Object> toMap(ConfigurationSection section) {
++        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
++        if (section != null) {
++            for (String key : section.getKeys(false)) {
++                Object obj = section.get(key);
++                if (obj != null) {
++                    builder.put(key, obj instanceof ConfigurationSection val ? toMap(val) : obj);
++                }
++            }
++        }
++        return builder.build();
++    }
++}
+diff --git a/src/main/java/dareharu/shuvi/ShuviWorldConfig.java b/src/main/java/dareharu/shuvi/ShuviWorldConfig.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c6fe8b493c076c3332cf5d3ad5a617163fcb13fd
+--- /dev/null
++++ b/src/main/java/dareharu/shuvi/ShuviWorldConfig.java
+@@ -0,0 +1,79 @@
++package dareharu.shuvi;
++
++import org.apache.commons.lang.BooleanUtils;
++import org.bukkit.World;
++import org.bukkit.configuration.ConfigurationSection;
++
++import java.util.List;
++import java.util.Map;
++import java.util.function.Predicate;
++
++import static dareharu.shuvi.ShuviConfig.log;
++
++@SuppressWarnings("unused")
++public final class ShuviWorldConfig {
++
++    private final String worldName;
++
++    public ShuviWorldConfig(String worldName) {
++        this.worldName = worldName;
++        init();
++    }
++
++    public void init() {
++        log("-------- World Settings For [" + worldName + "] --------");
++        ShuviConfig.readConfig(ShuviWorldConfig.class, this);
++    }
++
++    private void set(String path, Object val) {
++        ShuviConfig.config.addDefault("world-settings.default." + path, val);
++        ShuviConfig.config.set("world-settings.default." + path, val);
++        if (ShuviConfig.config.get("world-settings." + worldName + "." + path) != null) {
++            ShuviConfig.config.addDefault("world-settings." + worldName + "." + path, val);
++            ShuviConfig.config.set("world-settings." + worldName + "." + path, val);
++        }
++    }
++
++    private ConfigurationSection getConfigurationSection(String path) {
++        ConfigurationSection section = ShuviConfig.config.getConfigurationSection("world-settings." + worldName + "." + path);
++        return section != null ? section : ShuviConfig.config.getConfigurationSection("world-settings.default." + path);
++    }
++
++    private String getString(String path, String def) {
++        ShuviConfig.config.addDefault("world-settings.default." + path, def);
++        return ShuviConfig.config.getString("world-settings." + worldName + "." + path, ShuviConfig.config.getString("world-settings.default." + path));
++    }
++
++    private boolean getBoolean(String path, boolean def) {
++        ShuviConfig.config.addDefault("world-settings.default." + path, def);
++        return ShuviConfig.config.getBoolean("world-settings." + worldName + "." + path, ShuviConfig.config.getBoolean("world-settings.default." + path));
++    }
++
++    private boolean getBoolean(String path, Predicate<Boolean> predicate) {
++        String val = getString(path, "default").toLowerCase();
++        Boolean bool = BooleanUtils.toBooleanObject(val, "true", "false", "default");
++        return predicate.test(bool);
++    }
++
++    private double getDouble(String path, double def) {
++        ShuviConfig.config.addDefault("world-settings.default." + path, def);
++        return ShuviConfig.config.getDouble("world-settings." + worldName + "." + path, ShuviConfig.config.getDouble("world-settings.default." + path));
++    }
++
++    private int getInt(String path, int def) {
++        ShuviConfig.config.addDefault("world-settings.default." + path, def);
++        return ShuviConfig.config.getInt("world-settings." + worldName + "." + path, ShuviConfig.config.getInt("world-settings.default." + path));
++    }
++
++    private <T> List<?> getList(String path, T def) {
++        ShuviConfig.config.addDefault("world-settings.default." + path, def);
++        return ShuviConfig.config.getList("world-settings." + worldName + "." + path, ShuviConfig.config.getList("world-settings.default." + path));
++    }
++
++    private Map<String, Object> getMap(String path, Map<String, Object> def) {
++        final Map<String, Object> fallback = ShuviConfig.getMap("world-settings.default." + path, def);
++        final Map<String, Object> value = ShuviConfig.getMap("world-settings." + worldName + "." + path, null);
++        return value.isEmpty() ? fallback : value;
++    }
++
++}
+diff --git a/src/main/java/dareharu/shuvi/command/ShuviCommand.java b/src/main/java/dareharu/shuvi/command/ShuviCommand.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..2904066bba8436bf413b0f6f8b701ad8f4be484b
+--- /dev/null
++++ b/src/main/java/dareharu/shuvi/command/ShuviCommand.java
+@@ -0,0 +1,93 @@
++package dareharu.shuvi.command;
++
++import dareharu.shuvi.ShuviConfig;
++import net.minecraft.server.MinecraftServer;
++import net.minecraft.server.level.ServerLevel;
++import org.bukkit.Location;
++import org.bukkit.command.Command;
++import org.bukkit.command.CommandSender;
++import org.bukkit.craftbukkit.CraftServer;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.checkerframework.framework.qual.DefaultQualifier;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++import java.io.File;
++import java.util.Collections;
++import java.util.List;
++import java.util.Locale;
++import java.util.stream.Collectors;
++import java.util.stream.Stream;
++
++import static net.kyori.adventure.text.Component.text;
++import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
++import static net.kyori.adventure.text.format.NamedTextColor.RED;
++
++@DefaultQualifier(NonNull.class)
++public final class ShuviCommand extends Command {
++
++    public ShuviCommand(final String name) {
++        super(name);
++        this.description = "Shuvi related commands";
++        this.usageMessage = "/shuvi [reload | version";
++        this.setPermission("bukkit.command.shuvi");
++    }
++
++    @Override
++    public @NotNull List<String> tabComplete(
++        final @NotNull CommandSender sender,
++        final @NotNull String alias,
++        final String[] args,
++        final @Nullable Location location
++    ) throws IllegalArgumentException {
++        if (args.length == 1) {
++            return Stream.of("reload", "version")
++                .filter(arg -> arg.startsWith(args[0].toLowerCase()))
++                .collect(Collectors.toList());
++        }
++
++        return Collections.emptyList();
++    }
++
++    @Override
++    public boolean execute(CommandSender sender, String commandLabel, String[] args) {
++        if (!testPermission(sender)) {
++            return true;
++        }
++
++        if (args.length != 1) {
++            sender.sendMessage(text("Usage: " + this.usageMessage, RED));
++            return false;
++        }
++
++        final String subCommand = args[0].toLowerCase(Locale.ENGLISH);
++        if (subCommand.equals("reload")) {
++            doReload(sender);
++        } else if (subCommand.equals("version")) {
++            final @Nullable Command verCmd = MinecraftServer.getServer().server.getCommandMap().getCommand("version");
++            if (verCmd != null) {
++                verCmd.execute(sender, "shuvi", new String[0]);
++            }
++        } else {
++            sender.sendMessage(text("Usage: " + this.usageMessage, RED));
++            return false;
++        }
++
++        return true;
++    }
++
++    private void doReload(final CommandSender sender) {
++        Command.broadcastCommandMessage(sender, text("Please note that this command is not supported and may cause issues.", RED));
++        Command.broadcastCommandMessage(sender, text("If you encounter any issues please use the /stop command to restart your server.", RED));
++
++        MinecraftServer server = ((CraftServer) sender.getServer()).getServer();
++        ShuviConfig.init((File) server.options.valueOf("shuvi-settings"));
++        for (final ServerLevel level : server.getAllLevels()) {
++            level.shuviConfig.init();
++        }
++        server.server.reloadCount++;
++
++        Command.broadcastCommandMessage(sender, text("Shuvi config reload complete.", GREEN));
++    }
++
++}
+diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+index 12124d6fbc0406bb62bd95a0f7bab68afa43377c..01a8c485c46ca3b940b7c2340d2b865bb5772b25 100644
+--- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -234,6 +234,15 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         gg.pufferfish.pufferfish.PufferfishConfig.pufferfishFile = (java.io.File) options.valueOf("pufferfish-settings"); // Purpur
+         gg.pufferfish.pufferfish.PufferfishConfig.load(); // Pufferfish
+         gg.pufferfish.pufferfish.PufferfishCommand.init(); // Pufferfish
++        // Shuvi start
++        try {
++            dareharu.shuvi.ShuviConfig.init((java.io.File) options.valueOf("shuvi-settings"));
++        } catch (Exception e) {
++            DedicatedServer.LOGGER.error("Unable to load server configuration", e);
++            return false;
++        }
++        dareharu.shuvi.ShuviConfig.registerCommands();
++        // Shuvi end
+ 
+         this.setPvpAllowed(dedicatedserverproperties.pvp);
+         this.setFlightAllowed(dedicatedserverproperties.allowFlight);
+diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
+index bdb32964524cb2a4398b8d3bedfb03b0cb805b6d..5a87a701b0ced10f6277ea076f01f6f5c0515384 100644
+--- a/src/main/java/net/minecraft/world/level/Level.java
++++ b/src/main/java/net/minecraft/world/level/Level.java
+@@ -177,6 +177,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
+ 
+     public final com.destroystokyo.paper.antixray.ChunkPacketBlockController chunkPacketBlockController; // Paper - Anti-Xray
+     public final org.purpurmc.purpur.PurpurWorldConfig purpurConfig; // Purpur
++    public final dareharu.shuvi.ShuviWorldConfig shuviConfig; // Shuvi
+     public final co.aikar.timings.WorldTimingsHandler timings; // Paper
+     public static BlockPos lastPhysicsProblem; // Spigot
+     private org.spigotmc.TickLimiter entityLimiter;
+@@ -332,6 +333,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
+         this.spigotConfig = new org.spigotmc.SpigotWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName()); // Spigot
+         this.paperConfig = paperWorldConfigCreator.apply(this.spigotConfig); // Paper
+         this.purpurConfig = new org.purpurmc.purpur.PurpurWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Purpur
++        this.shuviConfig = new dareharu.shuvi.ShuviWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName()); // Shuvi
+         this.playerBreedingCooldowns = this.getNewBreedingCooldownCache(); // Purpur
+         this.generator = gen;
+         this.world = new CraftWorld((ServerLevel) this, gen, biomeProvider, env);
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 0ec2eb47149db34479171b128d343ce7a06b6f00..cb78c1ffd09ef8cff56166c5357af1959530783a 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -1071,6 +1071,7 @@ public final class CraftServer implements Server {
+         org.spigotmc.SpigotConfig.init((File) console.options.valueOf("spigot-settings")); // Spigot
+         this.console.paperConfigurations.reloadConfigs(this.console);
+         org.purpurmc.purpur.PurpurConfig.init((File) console.options.valueOf("purpur-settings")); // Purpur
++        dareharu.shuvi.ShuviConfig.init((File) console.options.valueOf("shuvi-settings")); // Shuvi
+         for (ServerLevel world : this.console.getAllLevels()) {
+             // world.serverLevelData.setDifficulty(config.difficulty); // Paper - per level difficulty
+             world.setSpawnSettings(world.serverLevelData.getDifficulty() != Difficulty.PEACEFUL && config.spawnMonsters, config.spawnAnimals); // Paper - per level difficulty (from MinecraftServer#setDifficulty(ServerLevel, Difficulty, boolean))
+@@ -1087,6 +1088,7 @@ public final class CraftServer implements Server {
+             }
+             world.spigotConfig.init(); // Spigot
+             world.purpurConfig.init(); // Purpur
++            world.shuviConfig.init(); // Shuvi
+         }
+ 
+         Plugin[] pluginClone = pluginManager.getPlugins().clone(); // Paper
+@@ -1103,6 +1105,7 @@ public final class CraftServer implements Server {
+         org.spigotmc.SpigotConfig.registerCommands(); // Spigot
+         io.papermc.paper.command.PaperCommands.registerCommands(this.console); // Paper
+         org.purpurmc.purpur.PurpurConfig.registerCommands(); // Purpur
++        dareharu.shuvi.ShuviConfig.registerCommands(); // Shuvi
+         this.overrideAllCommandBlockCommands = this.commandsConfiguration.getStringList("command-block-overrides").contains("*");
+         this.ignoreVanillaPermissions = this.commandsConfiguration.getBoolean("ignore-vanilla-permissions");
+ 
+@@ -2948,6 +2951,11 @@ public final class CraftServer implements Server {
+         }
+         // Purpur end
+ 
++        @Override
++        public YamlConfiguration getShuviConfig() {
++            return dareharu.shuvi.ShuviConfig.config;
++        }
++
+         @Override
+         public void restart() {
+             org.spigotmc.RestartCommand.restart();
+diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
+index a64833f854395cccb21977b1b221d366daf95ba2..b84350fe3d60b2edc0b054057ff7ca3048c0b769 100644
+--- a/src/main/java/org/bukkit/craftbukkit/Main.java
++++ b/src/main/java/org/bukkit/craftbukkit/Main.java
+@@ -187,6 +187,14 @@ public class Main {
+                         .describedAs("Yml file");
+                 // Purpur end
+ 
++                // Shuvi start
++                acceptsAll(asList("shuvi", "shuvi-settings"), "File for shuvi settings")
++                    .withRequiredArg()
++                    .ofType(File.class)
++                    .defaultsTo(new File("shuvi.yml"))
++                    .describedAs("Yml file");
++                // Shuvi end
++
+                 // Paper start
+                 acceptsAll(asList("server-name"), "Name of the server")
+                         .withRequiredArg()
