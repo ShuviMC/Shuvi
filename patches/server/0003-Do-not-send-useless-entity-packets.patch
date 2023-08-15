@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Tue, 15 Aug 2023 21:15:28 +0900
+Subject: [PATCH] Do not send useless entity packets
+
+
+diff --git a/src/main/java/dareharu/shuvi/ShuviConfig.java b/src/main/java/dareharu/shuvi/ShuviConfig.java
+index 82f88cabadeaa2ea3f677aeaea31c6129b2e406b..b467ec7930bc6d3e2ed8935953aca388f2b5952e 100644
+--- a/src/main/java/dareharu/shuvi/ShuviConfig.java
++++ b/src/main/java/dareharu/shuvi/ShuviConfig.java
+@@ -148,4 +148,10 @@ public final class ShuviConfig {
+         }
+         return builder.build();
+     }
++
++    public static boolean sendUselessEntityPackets = false;
++    private static void entitySettings() {
++        sendUselessEntityPackets = getBoolean("settings.entity.general.send-useless-entity-packets", sendUselessEntityPackets);
++    }
++
+ }
+diff --git a/src/main/java/net/minecraft/server/level/ServerEntity.java b/src/main/java/net/minecraft/server/level/ServerEntity.java
+index a0fcbb72947ddb5526da4a4c354cd4c6ee65184c..072c4618ab98971fdb2c4f0d9d316fb951e05e8f 100644
+--- a/src/main/java/net/minecraft/server/level/ServerEntity.java
++++ b/src/main/java/net/minecraft/server/level/ServerEntity.java
+@@ -215,7 +215,7 @@ public class ServerEntity {
+                     }
+                 }
+ 
+-                if (packet1 != null) {
++                if (packet1 != null && (dareharu.shuvi.ShuviConfig.sendUselessEntityPackets || !isUselessEntityPacket(packet1))) {
+                     this.broadcast.accept(packet1);
+                 }
+ 
+@@ -269,6 +269,19 @@ public class ServerEntity {
+ 
+     }
+ 
++    private static boolean isUselessEntityPacket(final @Nullable Packet<?> packet) {
++        if (packet instanceof ClientboundMoveEntityPacket) {
++            return switch (packet) {
++                case ClientboundMoveEntityPacket.Pos it -> it.getXa() == 0 && it.getYa() == 0 && it.getZa() == 0;
++                case ClientboundMoveEntityPacket.Rot it -> it.getxRot() == 0 && it.getyRot() == 0;
++                case ClientboundMoveEntityPacket.PosRot it -> it.getXa() == 0 && it.getYa() == 0 && it.getZa() == 0 && it.getxRot() == 0 && it.getyRot() == 0;
++                default -> false;
++            };
++        }
++
++        return false;
++    }
++
+     private static Stream<Entity> removedPassengers(List<Entity> passengers, List<Entity> lastPassengers) {
+         return lastPassengers.stream().filter((entity) -> {
+             return !passengers.contains(entity);
