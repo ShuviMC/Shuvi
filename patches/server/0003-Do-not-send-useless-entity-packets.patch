@@ -4,21 +4,6 @@ Date: Tue, 15 Aug 2023 21:15:28 +0900
 Subject: [PATCH] Do not send useless entity packets
 
 
-diff --git a/src/main/java/dareharu/shuvi/ShuviConfig.java b/src/main/java/dareharu/shuvi/ShuviConfig.java
-index 82f88cabadeaa2ea3f677aeaea31c6129b2e406b..b467ec7930bc6d3e2ed8935953aca388f2b5952e 100644
---- a/src/main/java/dareharu/shuvi/ShuviConfig.java
-+++ b/src/main/java/dareharu/shuvi/ShuviConfig.java
-@@ -148,4 +148,10 @@ public final class ShuviConfig {
-         }
-         return builder.build();
-     }
-+
-+    public static boolean sendUselessEntityPackets = false;
-+    private static void entitySettings() {
-+        sendUselessEntityPackets = getBoolean("settings.entity.general.send-useless-entity-packets", sendUselessEntityPackets);
-+    }
-+
- }
 diff --git a/src/main/java/net/minecraft/server/level/ServerEntity.java b/src/main/java/net/minecraft/server/level/ServerEntity.java
 index a0fcbb72947ddb5526da4a4c354cd4c6ee65184c..072c4618ab98971fdb2c4f0d9d316fb951e05e8f 100644
 --- a/src/main/java/net/minecraft/server/level/ServerEntity.java
@@ -52,3 +37,18 @@ index a0fcbb72947ddb5526da4a4c354cd4c6ee65184c..072c4618ab98971fdb2c4f0d9d316fb9
      private static Stream<Entity> removedPassengers(List<Entity> passengers, List<Entity> lastPassengers) {
          return lastPassengers.stream().filter((entity) -> {
              return !passengers.contains(entity);
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index de3b1cb1de95956640b8e170f2ba61d241b4cdf4..2ead21c1b1e74887bfb900c506f43cebf635ab5a 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -148,4 +148,10 @@ public final class ShuviConfig {
+         }
+         return builder.build();
+     }
++
++    public static boolean sendUselessEntityPackets = false;
++    private static void entitySettings() {
++        sendUselessEntityPackets = getBoolean("settings.entity.general.send-useless-entity-packets", sendUselessEntityPackets);
++    }
++
+ }
