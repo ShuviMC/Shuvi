@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Fri, 18 Aug 2023 21:48:57 +0900
+Subject: [PATCH] Allow preview features for development runs
+
+
+diff --git a/build.gradle.kts b/build.gradle.kts
+index a1f0e2fead856e84f82afab63d506220afd02d9d..b04a5ffea2043064e0b15eea07e9668c9306f61c 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -196,6 +196,7 @@ fun TaskContainer.registerRunTask(
+     val memoryGb = providers.gradleProperty("paper.runMemoryGb").getOrElse("2")
+     minHeapSize = "${memoryGb}G"
+     maxHeapSize = "${memoryGb}G"
++    jvmArgs("--enable-preview")
+ 
+     doFirst {
+         workingDir.mkdirs()
