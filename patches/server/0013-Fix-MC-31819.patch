@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sun, 20 Aug 2023 00:30:15 +0900
+Subject: [PATCH] Fix MC-31819
+
+See: https://bugs.mojang.com/browse/MC-31819
+
+diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
+index d519c0980995a007b9541248f5ee138be9edbfb1..522b5764dd3d1d0e2db59a6a6723649aa1fb6973 100644
+--- a/src/main/java/net/minecraft/world/entity/player/Player.java
++++ b/src/main/java/net/minecraft/world/entity/player/Player.java
+@@ -1973,6 +1973,7 @@ public abstract class Player extends LivingEntity {
+     }
+ 
+     public void causeFoodExhaustion(float f, EntityExhaustionEvent.ExhaustionReason reason) {
++        if (org.shuvimc.shuvi.ShuviConfig.fixMC31819 && this.level().getDifficulty() == Difficulty.PEACEFUL) return; // Shuvi - fix MC-31819
+         // CraftBukkit end
+         if (!this.abilities.invulnerable) {
+             if (!this.level().isClientSide) {
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index bd73226c463cb3d5dc742379b3dc6ec406ff04b9..c1690b2a125cfe00a6ad9c1b3085bf9e4e7d3a0b 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -161,4 +161,10 @@ public final class ShuviConfig {
+         statisticsInterval = Math.max(getInt("settings.player.statistics-interval", statisticsInterval), 1);
+     }
+ 
++    /** @see <a href="https://bugs.mojang.com/browse/MC-31819">MC-31918</a> */
++    public static boolean fixMC31819 = true;
++    private static void fixUpSettings() {
++        fixMC31819 = getBoolean("settings.fix-ups.mc-31918", fixMC31819);
++    }
++
+ }
