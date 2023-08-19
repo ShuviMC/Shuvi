@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sat, 19 Aug 2023 22:48:13 +0900
+Subject: [PATCH] Swap the predicate order of collisions
+
+Akarin
+Copyright (C) 2020  tsao-chi@the-lingo.org
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
+index aa517a7c1e69f197d59d6a2cad73cf9199ac6129..5f6fd101acea5818e7833261f4d73646abd33859 100644
+--- a/src/main/java/net/minecraft/world/entity/Entity.java
++++ b/src/main/java/net/minecraft/world/entity/Entity.java
+@@ -2143,8 +2143,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+     public void playerTouch(Player player) {}
+ 
+     public void push(Entity entity) {
++        if (entity.noPhysics || this.noPhysics) { // Shuvi - swap the predicate order of collisions
+         if (!this.isPassengerOfSameVehicle(entity)) {
+-            if (!entity.noPhysics && !this.noPhysics) {
++            // if (!entity.noPhysics && !this.noPhysics) { // Shuvi - moved up
+                 if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper
+                 double d0 = entity.getX() - this.getX();
+                 double d1 = entity.getZ() - this.getZ();
