@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sun, 20 Aug 2023 00:18:20 +0900
+Subject: [PATCH] Skip negligible planar movement multiplier
+
+Gale
+Copyright (C) 2022  Martijn Muijsers
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
+index 5e7993c5a0e910c443e704ac924bfca430c368e9..76a506d15d803c80712e337142a0db4ab078eb81 100644
+--- a/src/main/java/net/minecraft/world/entity/Entity.java
++++ b/src/main/java/net/minecraft/world/entity/Entity.java
+@@ -1278,9 +1278,14 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+                 }
+ 
+                 this.tryCheckInsideBlocks();
++                // Shuvi start - skip negligible planar movement multiplier
++                final Vec3 oldDeltaMovement = this.getDeltaMovement();
++                if (oldDeltaMovement.x < -1e-6 || oldDeltaMovement.x > 1e-6 || oldDeltaMovement.z < -1e-6 || oldDeltaMovement.z > 1e-6) {
+                 float f = this.getBlockSpeedFactor();
+ 
+-                this.setDeltaMovement(this.getDeltaMovement().multiply((double) f, 1.0D, (double) f));
++                if (f < 1 - 1e-6 || f > 1 + 1e-6) this.setDeltaMovement(this.getDeltaMovement().multiply((double) f, 1.0D, (double) f));
++                }
++                // Shuvi end
+                 // Paper start - remove expensive streams from here
+                 boolean noneMatch = true;
+                 AABB fireSearchBox = this.getBoundingBox().deflate(1.0E-6D);
