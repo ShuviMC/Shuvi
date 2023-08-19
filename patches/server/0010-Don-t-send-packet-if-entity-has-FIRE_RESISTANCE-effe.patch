@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sat, 19 Aug 2023 23:13:32 +0900
+Subject: [PATCH] Don't send packet if entity has FIRE_RESISTANCE effect
+
+Slice
+Copyright (c) 2023 Cryptite, MIT License
+
+diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
+index 5f6fd101acea5818e7833261f4d73646abd33859..9834f5f5c25cc8585d071cf9bb87102e8ae93595 100644
+--- a/src/main/java/net/minecraft/world/entity/Entity.java
++++ b/src/main/java/net/minecraft/world/entity/Entity.java
+@@ -920,7 +920,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+ 
+         this.checkBelowWorld();
+         if (!this.level().isClientSide) {
+-            this.setSharedFlagOnFire(this.remainingFireTicks > 0);
++            this.setSharedFlagOnFire(this.remainingFireTicks > 0 && (!(this instanceof net.minecraft.world.entity.LivingEntity livingEntity) || !livingEntity.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE))); // Shuvi
+         }
+ 
+         this.firstTick = false;
