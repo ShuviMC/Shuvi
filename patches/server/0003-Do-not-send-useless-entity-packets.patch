@@ -5,7 +5,7 @@ Subject: [PATCH] Do not send useless entity packets
 
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerEntity.java b/src/main/java/net/minecraft/server/level/ServerEntity.java
-index a0fcbb72947ddb5526da4a4c354cd4c6ee65184c..072c4618ab98971fdb2c4f0d9d316fb951e05e8f 100644
+index a0fcbb72947ddb5526da4a4c354cd4c6ee65184c..bc16d7c1470732a0c60ba2ad8728276e1ae2d4be 100644
 --- a/src/main/java/net/minecraft/server/level/ServerEntity.java
 +++ b/src/main/java/net/minecraft/server/level/ServerEntity.java
 @@ -215,7 +215,7 @@ public class ServerEntity {
@@ -13,7 +13,7 @@ index a0fcbb72947ddb5526da4a4c354cd4c6ee65184c..072c4618ab98971fdb2c4f0d9d316fb9
                  }
  
 -                if (packet1 != null) {
-+                if (packet1 != null && (dareharu.shuvi.ShuviConfig.sendUselessEntityPackets || !isUselessEntityPacket(packet1))) {
++                if (packet1 != null && (org.shuvimc.shuvi.ShuviConfig.sendUselessEntityPackets || !isUselessEntityPacket(packet1))) {
                      this.broadcast.accept(packet1);
                  }
  
