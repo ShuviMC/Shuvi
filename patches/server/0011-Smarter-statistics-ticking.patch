@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sat, 19 Aug 2023 23:32:23 +0900
+Subject: [PATCH] Smarter statistics ticking
+
+In vanilla, statistics that count time spent for an action (i.e. time played or sneak time) are incremented every tick. This is retarded. With this patch and a configured interval of 20, the statistics are only ticked every 20th tick and are incremented by 20 ticks at a time. This means a lot less ticking with the same accurate counting.
+
+With an interval of 20, this patch saves roughly 3ms per tick on a server w/ 80 players online.
+
+Hydrinity
+Copyright (c) 2020 Mykyta Komarnytskyy, MIT License
+
+diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
+index d00035e31cf4773a418d1cc6a6018d08e6b558f0..d519c0980995a007b9541248f5ee138be9edbfb1 100644
+--- a/src/main/java/net/minecraft/world/entity/player/Player.java
++++ b/src/main/java/net/minecraft/world/entity/player/Player.java
+@@ -311,19 +311,24 @@ public abstract class Player extends LivingEntity {
+         this.moveCloak();
+         if (!this.level().isClientSide) {
+             this.foodData.tick(this);
+-            this.awardStat(Stats.PLAY_TIME);
+-            this.awardStat(Stats.TOTAL_WORLD_TIME);
++            // Shuvi start - perf: reduce awarding statistics
++            final int interval = org.shuvimc.shuvi.ShuviConfig.statisticsInterval;
++            if (interval == 1 || this.tickCount % interval == 0) {
++            this.awardStat(Stats.PLAY_TIME, interval);
++            this.awardStat(Stats.TOTAL_WORLD_TIME, interval);
+             if (this.isAlive()) {
+-                this.awardStat(Stats.TIME_SINCE_DEATH);
++                this.awardStat(Stats.TIME_SINCE_DEATH, interval);
+             }
+ 
+             if (this.isDiscrete()) {
+-                this.awardStat(Stats.CROUCH_TIME);
++                this.awardStat(Stats.CROUCH_TIME, interval);
+             }
+ 
+             if (!this.isSleeping()) {
+-                this.awardStat(Stats.TIME_SINCE_REST);
++                this.awardStat(Stats.TIME_SINCE_REST, interval);
+             }
++            }
++            // Shuvi end
+         }
+ 
+         int i = 29999999;
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index a7d8777bd26747b362eec2dbb847ca833901eec2..bd73226c463cb3d5dc742379b3dc6ec406ff04b9 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -155,8 +155,10 @@ public final class ShuviConfig {
+     }
+ 
+     public static boolean allowAnyUsername = false;
++    public static int statisticsInterval = 1;
+     private static void playerSettings() {
+         allowAnyUsername = getBoolean("settings.player.allow-any-username", allowAnyUsername);
++        statisticsInterval = Math.max(getInt("settings.player.statistics-interval", statisticsInterval), 1);
+     }
+ 
+ }
