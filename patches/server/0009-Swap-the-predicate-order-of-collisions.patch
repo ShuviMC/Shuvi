@@ -20,17 +20,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index aa517a7c1e69f197d59d6a2cad73cf9199ac6129..5f6fd101acea5818e7833261f4d73646abd33859 100644
+index aa517a7c1e69f197d59d6a2cad73cf9199ac6129..cbf4443bb848e01dba921648c5aab348f0ee89eb 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
 @@ -2143,8 +2143,9 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
      public void playerTouch(Player player) {}
  
      public void push(Entity entity) {
-+        if (entity.noPhysics || this.noPhysics) { // Shuvi - swap the predicate order of collisions
++        if (entity.noPhysics || this.noPhysics) return; // Shuvi - swap the predicate order of collisions
          if (!this.isPassengerOfSameVehicle(entity)) {
 -            if (!entity.noPhysics && !this.noPhysics) {
-+            // if (!entity.noPhysics && !this.noPhysics) { // Shuvi - moved up
++            if (true || !entity.noPhysics && !this.noPhysics) { // Shuvi - moved up
                  if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper
                  double d0 = entity.getX() - this.getX();
                  double d1 = entity.getZ() - this.getZ();
