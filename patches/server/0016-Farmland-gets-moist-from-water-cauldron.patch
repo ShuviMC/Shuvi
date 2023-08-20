@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sun, 20 Aug 2023 16:34:15 +0900
+Subject: [PATCH] Farmland gets moist from water cauldron
+
+
+diff --git a/src/main/java/net/minecraft/world/level/block/FarmBlock.java b/src/main/java/net/minecraft/world/level/block/FarmBlock.java
+index 0d5531b85ffd63039e1d86cc683b7b1fde3c6cd3..3cb9b8401a95504799cb8ef835df0f38c7fe8658 100644
+--- a/src/main/java/net/minecraft/world/level/block/FarmBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/FarmBlock.java
+@@ -171,7 +171,7 @@ public class FarmBlock extends Block {
+                     int y = dy + yOff;
+                     net.minecraft.world.level.chunk.LevelChunk chunk = (net.minecraft.world.level.chunk.LevelChunk)world.getChunk(x >> 4, z >> 4);
+                     net.minecraft.world.level.material.FluidState fluid = chunk.getBlockStateFinal(x, y, z).getFluidState();
+-                    if (fluid.is(FluidTags.WATER)) {
++                    if (fluid.is(FluidTags.WATER) || (((ServerLevel) world).shuviConfig.farmlandGetsMoistFromWaterCauldron && chunk.getBlockStateFinal(x, y, z).is(net.minecraft.world.level.block.Blocks.WATER_CAULDRON))) {
+                         return true;
+                     }
+                 }
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java
+index 58d5eceb6a65ab3ce7b27dc130d57577baf0c53a..63b2c577286d9cb062392fd7db1addea987bdc0c 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java
+@@ -76,8 +76,10 @@ public final class ShuviWorldConfig {
+     }
+ 
+     public int farmlandWaterSeekRange = 4;
++    public boolean farmlandGetsMoistFromWaterCauldron = false;
+     private void farmlandSettings() {
+         farmlandWaterSeekRange = getInt("blocks.farmland.water-seek-range", farmlandWaterSeekRange);
++        farmlandGetsMoistFromWaterCauldron = getBoolean("blocks.farmland.gets-moist-from-water-cauldron", farmlandGetsMoistFromWaterCauldron);
+     }
+ 
+ }
