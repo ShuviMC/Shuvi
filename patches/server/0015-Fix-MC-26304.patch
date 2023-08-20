@@ -3,8 +3,7 @@ From: Sayakie <sayakie@kakao.com>
 Date: Sun, 20 Aug 2023 12:06:27 +0900
 Subject: [PATCH] Fix MC-26304
 
-Fix brewing stands resetting their brewTime
-when being unloaded
+Fix brewing stands resetting their brewTime when being unloaded
 
 See https://bugs.mojang.com/browse/MC-26304
 
@@ -45,7 +44,7 @@ index c57efcb9a79337ec791e4e8f6671612f0a82b441..3b556077e24aeb9836c42d1a199e9835
  
      @Override
 diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
-index 715cbe89763564a4a56a2d56cfdf6c18df5f580c..2f3712f7cf06450471f21c0a4f60cb6925453533 100644
+index 715cbe89763564a4a56a2d56cfdf6c18df5f580c..57f0234361f015af2e05ef5d197f550dd1814352 100644
 --- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
 +++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
 @@ -161,11 +161,14 @@ public final class ShuviConfig {
@@ -59,7 +58,7 @@ index 715cbe89763564a4a56a2d56cfdf6c18df5f580c..2f3712f7cf06450471f21c0a4f60cb69
      /** @see <a href="https://bugs.mojang.com/browse/MC-110386">MC-110386</a> */
      public static boolean fixMC110386 = true;
      private static void fixUpSettings() {
-+        fixMC26304 = getBoolean("settings.fix-ups.mc-110386", fixMC26304);
++        fixMC26304 = getBoolean("settings.fix-ups.mc-26304", fixMC26304);
          fixMC31819 = getBoolean("settings.fix-ups.mc-31918", fixMC31819);
          fixMC110386 = getBoolean("settings.fix-ups.mc-110386", fixMC110386);
      }
