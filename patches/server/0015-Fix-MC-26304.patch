@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sun, 20 Aug 2023 12:06:27 +0900
+Subject: [PATCH] Fix MC-26304
+
+Fix brewing stands resetting their brewTime
+when being unloaded
+
+See https://bugs.mojang.com/browse/MC-26304
+
+Mirai
+Copyright (C) 2022  etil2jz
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java
+index c57efcb9a79337ec791e4e8f6671612f0a82b441..3b556077e24aeb9836c42d1a199e9835adf2a8ad 100644
+--- a/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java
++++ b/src/main/java/net/minecraft/world/level/block/entity/BrewingStandBlockEntity.java
+@@ -301,6 +301,7 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
+         ContainerHelper.loadAllItems(nbt, this.items);
+         this.brewTime = nbt.getShort("BrewTime");
+         this.fuel = nbt.getByte("Fuel");
++        if (org.shuvimc.shuvi.ShuviConfig.fixMC26304) this.ingredient = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(new net.minecraft.resources.ResourceLocation(nbt.getString("Shuvi.ingredient"))); // Shuvi - fix MC-26304
+     }
+ 
+     @Override
+@@ -309,6 +310,7 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
+         nbt.putShort("BrewTime", (short) this.brewTime);
+         ContainerHelper.saveAllItems(nbt, this.items);
+         nbt.putByte("Fuel", (byte) this.fuel);
++        if (org.shuvimc.shuvi.ShuviConfig.fixMC26304) nbt.putString("Shuvi.ingredient", net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(this.ingredient).toString()); // Shuvi - fix MC-26304
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index 715cbe89763564a4a56a2d56cfdf6c18df5f580c..2f3712f7cf06450471f21c0a4f60cb6925453533 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -161,11 +161,14 @@ public final class ShuviConfig {
+         statisticsInterval = Math.max(getInt("settings.player.statistics-interval", statisticsInterval), 1);
+     }
+ 
++    /** @see <a href="https://bugs.mojang.com/browse/MC-26304">MC-26304</a> */
++    public static boolean fixMC26304 = true;
+     /** @see <a href="https://bugs.mojang.com/browse/MC-31819">MC-31918</a> */
+     public static boolean fixMC31819 = true;
+     /** @see <a href="https://bugs.mojang.com/browse/MC-110386">MC-110386</a> */
+     public static boolean fixMC110386 = true;
+     private static void fixUpSettings() {
++        fixMC26304 = getBoolean("settings.fix-ups.mc-110386", fixMC26304);
+         fixMC31819 = getBoolean("settings.fix-ups.mc-31918", fixMC31819);
+         fixMC110386 = getBoolean("settings.fix-ups.mc-110386", fixMC110386);
+     }
