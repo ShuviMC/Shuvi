@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Sun, 20 Aug 2023 11:54:19 +0900
+Subject: [PATCH] Fix MC-110386
+
+Fix certain mobs attack themselves
+
+If an entity is provoked by a second one using commands,
+the second will join in the fight against itself,
+causing it to attack itself repeatedly.
+
+See https://bugs.mojang.com/browse/MC-110386
+
+Mirai
+Copyright (C) 2022  etil2jz
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/net/minecraft/world/entity/ai/goal/target/HurtByTargetGoal.java b/src/main/java/net/minecraft/world/entity/ai/goal/target/HurtByTargetGoal.java
+index 80ef4b6649da3049f21624926fa38595d76c5da5..2376a73da947c7200afd3034a317ff9b641e56f9 100644
+--- a/src/main/java/net/minecraft/world/entity/ai/goal/target/HurtByTargetGoal.java
++++ b/src/main/java/net/minecraft/world/entity/ai/goal/target/HurtByTargetGoal.java
+@@ -114,6 +114,7 @@ public class HurtByTargetGoal extends TargetGoal {
+     }
+ 
+     protected void alertOther(Mob mob, LivingEntity target) {
++        if (org.shuvimc.shuvi.ShuviConfig.fixMC110386 && mob == target) return; // Shuvi - fix MC-110386
+         mob.setTarget(target, org.bukkit.event.entity.EntityTargetEvent.TargetReason.TARGET_ATTACKED_NEARBY_ENTITY, true); // CraftBukkit - reason
+     }
+ }
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index c1690b2a125cfe00a6ad9c1b3085bf9e4e7d3a0b..715cbe89763564a4a56a2d56cfdf6c18df5f580c 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -163,8 +163,11 @@ public final class ShuviConfig {
+ 
+     /** @see <a href="https://bugs.mojang.com/browse/MC-31819">MC-31918</a> */
+     public static boolean fixMC31819 = true;
++    /** @see <a href="https://bugs.mojang.com/browse/MC-110386">MC-110386</a> */
++    public static boolean fixMC110386 = true;
+     private static void fixUpSettings() {
+         fixMC31819 = getBoolean("settings.fix-ups.mc-31918", fixMC31819);
++        fixMC110386 = getBoolean("settings.fix-ups.mc-110386", fixMC110386);
+     }
+ 
+ }
