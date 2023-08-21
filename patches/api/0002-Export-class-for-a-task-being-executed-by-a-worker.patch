@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Mon, 21 Aug 2023 22:20:50 +0900
+Subject: [PATCH] Export class for a task being executed by a worker
+
+
+diff --git a/src/main/java/org/bukkit/scheduler/BukkitWorker.java b/src/main/java/org/bukkit/scheduler/BukkitWorker.java
+index 81bdc9ceafb2a7cd3b93f4049504b3d5de049536..84cdcc6b35786d5039a3de98a6be61db4d45c92a 100644
+--- a/src/main/java/org/bukkit/scheduler/BukkitWorker.java
++++ b/src/main/java/org/bukkit/scheduler/BukkitWorker.java
+@@ -18,6 +18,16 @@ public interface BukkitWorker {
+      */
+     public int getTaskId();
+ 
++    // Shuvi start
++    /**
++     * Returns the class for the task being executed by this worker.
++     *
++     * @return The class for the task being executed by this worker
++     */
++    @NotNull
++    public Class<?> getTaskClass();
++    // Shuvi end
++
+     /**
+      * Returns the Plugin that owns this task.
+      *
