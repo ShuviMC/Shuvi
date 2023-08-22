@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Tue, 22 Aug 2023 22:01:44 +0900
+Subject: [PATCH] Fix memory leak when villagers get moved to another world
+
+Leaves
+Copyright (C) 2023  violetc
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/net/minecraft/world/entity/npc/Villager.java b/src/main/java/net/minecraft/world/entity/npc/Villager.java
+index 2ea19f72dd8e86d5821f734c13ac2dc6f53e9c30..eddbcc683d2f8276813fb19857b77e74bd2cd43b 100644
+--- a/src/main/java/net/minecraft/world/entity/npc/Villager.java
++++ b/src/main/java/net/minecraft/world/entity/npc/Villager.java
+@@ -1189,4 +1189,21 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
+ 
+         return optional.isPresent() ? worldTime - (Long) optional.get() < 24000L : false;
+     }
++
++    // Shuvi start - fix a memory leak
++    @Nullable
++    @Override
++    public Entity changeDimension(final ServerLevel destination) {
++        if (org.shuvimc.shuvi.ShuviConfig.fixMemoryLeakWhenVillagersGetMovedToAnotherWorld) {
++            this.releaseAllPois();
++            this.getBrain().eraseMemory(MemoryModuleType.HOME);
++            this.getBrain().eraseMemory(MemoryModuleType.JOB_SITE);
++            this.getBrain().eraseMemory(MemoryModuleType.POTENTIAL_JOB_SITE);
++            this.getBrain().eraseMemory(MemoryModuleType.MEETING_POINT);
++            this.refreshBrain(destination);
++        }
++
++        return super.changeDimension(destination);
++    }
++    // Shuvi end
+ }
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index b28af6a6a66a9a5343f1a286b835230d31e08ce9..40e179c4d48d164d4c96a83d32719e2a944fa7a8 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -183,10 +183,12 @@ public final class ShuviConfig {
+     public static boolean fixMC31819 = true;
+     /** @see <a href="https://bugs.mojang.com/browse/MC-110386">MC-110386</a> */
+     public static boolean fixMC110386 = true;
++    public static boolean fixMemoryLeakWhenVillagersGetMovedToAnotherWorld = true;
+     private static void fixUpSettings() {
+         fixMC26304 = getBoolean("settings.fix-ups.mc-26304", fixMC26304);
+         fixMC31819 = getBoolean("settings.fix-ups.mc-31918", fixMC31819);
+         fixMC110386 = getBoolean("settings.fix-ups.mc-110386", fixMC110386);
++        fixMemoryLeakWhenVillagersGetMovedToAnotherWorld = getBoolean("settings.fix-ups.memory-leak-when-villagers-get-moved-to-another-world", fixMemoryLeakWhenVillagersGetMovedToAnotherWorld);
+     }
+ 
+ }
