@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Tue, 22 Aug 2023 22:08:09 +0900
+Subject: [PATCH] Configurable map update interval
+
+Pearl
+Copyright (c) 2022 Minh Nguyen, MIT License
+
+diff --git a/src/main/java/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java b/src/main/java/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
+index 23c7ded4049c08bc62f8b823e0967da4f3df4bf9..99329bf0e5348094a1d9c93087e973e9ecd90b27 100644
+--- a/src/main/java/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
++++ b/src/main/java/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
+@@ -623,7 +623,7 @@ public class MapItemSavedData extends SavedData {
+         @Nullable
+         Packet<?> nextUpdatePacket(int mapId) {
+             MapItemSavedData.MapPatch worldmap_b;
+-            if (!this.dirtyData && this.tick % 5 != 0) { this.tick++; return null; } // Paper - this won't end up sending, so don't render it!
++            if (!this.dirtyData && this.tick % org.shuvimc.shuvi.ShuviConfig.mapUpdateInterval != 0) { this.tick++; return null; } // Paper - this won't end up sending, so don't render it! // Shuvi - configurable map update interval
+             boolean vanillaMaps = shouldUseVanillaMap(); // Paper
+             org.bukkit.craftbukkit.map.RenderData render = !vanillaMaps ? MapItemSavedData.this.mapView.render((org.bukkit.craftbukkit.entity.CraftPlayer) this.player.getBukkitEntity()) : MapItemSavedData.this.vanillaRender; // CraftBukkit // Paper
+ 
+@@ -636,7 +636,7 @@ public class MapItemSavedData extends SavedData {
+ 
+             Collection collection;
+ 
+-            if ((true || this.dirtyDecorations) && this.tick++ % 5 == 0) { // CraftBukkit - custom maps don't update this yet
++            if ((true || this.dirtyDecorations) && this.tick++ % org.shuvimc.shuvi.ShuviConfig.mapUpdateInterval == 0) { // CraftBukkit - custom maps don't update this yet // Shuvi - configurable map update interval
+                 this.dirtyDecorations = false;
+                 // CraftBukkit start
+                 java.util.Collection<MapDecoration> icons = new java.util.ArrayList<MapDecoration>();
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index 40e179c4d48d164d4c96a83d32719e2a944fa7a8..58c8998ec05816a88b1df365485f1147c637f0d9 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -162,6 +162,11 @@ public final class ShuviConfig {
+         statisticsInterval = Math.max(getInt("settings.player.statistics-interval", statisticsInterval), 1);
+     }
+ 
++    public static int mapUpdateInterval = 5;
++    private static void itemSettings() {
++        mapUpdateInterval = getInt("settings.item.map.update-interval", mapUpdateInterval);
++    }
++
+     public static boolean useAppleSkinProtocol = false;
+     public static boolean useJadeProtocol = false;
+     public static boolean useXaeroMapProtocol = false;
