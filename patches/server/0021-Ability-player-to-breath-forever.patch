@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Tue, 22 Aug 2023 21:42:26 +0900
+Subject: [PATCH] Ability player to breath forever
+
+
+diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
+index 522b5764dd3d1d0e2db59a6a6723649aa1fb6973..6b6a29361c636216c87b67d183406015c1a5951e 100644
+--- a/src/main/java/net/minecraft/world/entity/player/Player.java
++++ b/src/main/java/net/minecraft/world/entity/player/Player.java
+@@ -372,6 +372,13 @@ public abstract class Player extends LivingEntity {
+         return this.wasUnderwater;
+     }
+ 
++    // Shuvi start
++    @Override
++    public boolean canBreatheUnderwater() {
++        return this.level().shuviConfig.playerEternalBreathe || super.canBreatheUnderwater();
++    }
++    // Shuvi end
++
+     private void turtleHelmetTick() {
+         ItemStack itemstack = this.getItemBySlot(EquipmentSlot.HEAD);
+ 
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java
+index d131eca8b3045a175ef1d9f4faac49fce5bc34fc..d7bb0ca008f3def87bf95b09b51cbf23a50b4190 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviWorldConfig.java
+@@ -75,6 +75,11 @@ public final class ShuviWorldConfig {
+         return value.isEmpty() ? fallback : value;
+     }
+ 
++    public boolean playerEternalBreathe = false;
++    private void playerSettings() {
++        playerEternalBreathe = getBoolean("gameplay-mechanics.player.eternal-breathe", playerEternalBreathe);
++    }
++
+     public int farmlandWaterSeekRange = 4;
+     public boolean farmlandGetsMoistFromWaterCauldron = false;
+     private void farmlandSettings() {
