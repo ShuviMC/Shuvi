@@ -16,6 +16,11 @@ jobs:
   pr_comment:
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/github-script@v6
         with:
