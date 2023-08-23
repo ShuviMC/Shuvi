@@ -7,7 +7,11 @@
 name: Build Shuvi
 on:
   push:
+    paths:
+      - 'patches/**'
   pull_request:
+    paths:
+      - 'patches/**'
     types:
       - opened
       - reopened
