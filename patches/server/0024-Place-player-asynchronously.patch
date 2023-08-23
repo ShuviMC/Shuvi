@@ -1,0 +1,80 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sayakie <sayakie@kakao.com>
+Date: Wed, 23 Aug 2023 21:37:38 +0900
+Subject: [PATCH] Place player asynchronously
+
+
+diff --git a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index 2cb05725992ccb06b2bf91a2d578306cb8bf7105..4cdf38712784c094ac7367f0763502e714eeb36e 100644
+--- a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -124,7 +124,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+ 
+     }
+ 
+-    private static final java.util.concurrent.ExecutorService authenticatorPool = java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
++    public static final java.util.concurrent.ExecutorService authenticatorPool = java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads // Shuvi - private -> public
+ 
+     // Spigot start
+     public void initUUID()
+diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
+index 4de93de968a27ff8ac4aa7a4fe5d254644205229..28c48979d7edc1840a3d708304834055ca5633ae 100644
+--- a/src/main/java/net/minecraft/server/players/PlayerList.java
++++ b/src/main/java/net/minecraft/server/players/PlayerList.java
+@@ -189,6 +189,8 @@ public abstract class PlayerList {
+     abstract public void loadAndSaveFiles(); // Paper - moved from DedicatedPlayerList constructor
+ 
+     public void placeNewPlayer(Connection connection, ServerPlayer player) {
++        // Shuvi - moved down
++        /*
+         player.isRealPlayer = true; // Paper
+         player.loginTime = System.currentTimeMillis(); // Paper
+         GameProfile gameprofile = player.getGameProfile();
+@@ -203,8 +205,31 @@ public abstract class PlayerList {
+         } else {
+             s = gameprofile.getName();
+         }
++        */
+ 
++        // Shuvi start - place player async
++        if (org.shuvimc.shuvi.ShuviConfig.placePlayerAsync) java.util.concurrent.CompletableFuture.supplyAsync(() -> this.load(player), net.minecraft.server.network.ServerLoginPacketListenerImpl.authenticatorPool).thenAcceptAsync(nbt -> placeNewPlayerAfter(connection, player, nbt), server); else {
+         CompoundTag nbttagcompound = this.load(player);
++        placeNewPlayerAfter(connection, player, nbttagcompound);
++        }
++    }
++
++    private void placeNewPlayerAfter(Connection connection, ServerPlayer player, @Nullable CompoundTag nbttagcompound) {
++        player.isRealPlayer = true; // Paper
++        player.loginTime = System.currentTimeMillis(); // Paper
++        GameProfile gameprofile = player.getGameProfile();
++        GameProfileCache usercache = this.server.getProfileCache();
++        String s;
++
++        if (usercache != null) {
++            Optional<GameProfile> optional = usercache.get(gameprofile.getId());
++
++            s = (String) optional.map(GameProfile::getName).orElse(gameprofile.getName());
++            usercache.add(gameprofile);
++        } else {
++            s = gameprofile.getName();
++        }
++        // Shuvi end - place player async
+         ResourceKey resourcekey;
+         // CraftBukkit start - Better rename detection
+         if (nbttagcompound != null && nbttagcompound.contains("bukkit")) {
+diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+index 58c8998ec05816a88b1df365485f1147c637f0d9..2c445bcdba31e469f1ba6f65fe9df157045e9461 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -182,6 +182,11 @@ public final class ShuviConfig {
+         }
+     }
+ 
++    public static boolean placePlayerAsync = false;
++    private static void unsupportedSettings() {
++        placePlayerAsync = getBoolean("settings.unsupported.async-player-login", placePlayerAsync);
++    }
++
+     /** @see <a href="https://bugs.mojang.com/browse/MC-26304">MC-26304</a> */
+     public static boolean fixMC26304 = true;
+     /** @see <a href="https://bugs.mojang.com/browse/MC-31819">MC-31918</a> */
