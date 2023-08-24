@@ -18,7 +18,7 @@ index 2cb05725992ccb06b2bf91a2d578306cb8bf7105..4cdf38712784c094ac7367f0763502e7
      // Spigot start
      public void initUUID()
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index 4de93de968a27ff8ac4aa7a4fe5d254644205229..28c48979d7edc1840a3d708304834055ca5633ae 100644
+index 4de93de968a27ff8ac4aa7a4fe5d254644205229..63e7c899ca48ce4bf84d4ddf59121a5e1e30656b 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
 @@ -189,6 +189,8 @@ public abstract class PlayerList {
@@ -37,13 +37,13 @@ index 4de93de968a27ff8ac4aa7a4fe5d254644205229..28c48979d7edc1840a3d708304834055
 +        */
  
 +        // Shuvi start - place player async
-+        if (org.shuvimc.shuvi.ShuviConfig.placePlayerAsync) java.util.concurrent.CompletableFuture.supplyAsync(() -> this.load(player), net.minecraft.server.network.ServerLoginPacketListenerImpl.authenticatorPool).thenAcceptAsync(nbt -> placeNewPlayerAfter(connection, player, nbt), server); else {
++        if (org.shuvimc.shuvi.ShuviConfig.placePlayerAsync) java.util.concurrent.CompletableFuture.supplyAsync(() -> this.load(player), net.minecraft.server.network.ServerLoginPacketListenerImpl.authenticatorPool).thenAcceptAsync(nbt -> placeNewPlayer(connection, player, nbt), server); else {
          CompoundTag nbttagcompound = this.load(player);
-+        placeNewPlayerAfter(connection, player, nbttagcompound);
++        placeNewPlayer(connection, player, nbttagcompound);
 +        }
 +    }
 +
-+    private void placeNewPlayerAfter(Connection connection, ServerPlayer player, @Nullable CompoundTag nbttagcompound) {
++    private void placeNewPlayer(Connection connection, ServerPlayer player, @Nullable CompoundTag nbttagcompound) {
 +        player.isRealPlayer = true; // Paper
 +        player.loginTime = System.currentTimeMillis(); // Paper
 +        GameProfile gameprofile = player.getGameProfile();
