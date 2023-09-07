@@ -18,6 +18,12 @@ on:
       - synchronize
       - labeled
 
+# We only ever need one of these running on a single PR.
+# Just let the newest one complete if there are multiple running.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     # Run on all label events (won't be duplicated) or all push events or on PR syncs not from the same repo
