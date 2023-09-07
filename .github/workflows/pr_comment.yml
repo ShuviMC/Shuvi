@@ -76,6 +76,6 @@ jobs:
             }
 
             const link = `https://nightly.link/${owner}/${repo}/actions/artifacts/${artifact.id}.zip`;
-            const body = `Download the paperclip jar for this pull request: [${artifact.name}.zip](${link})`;
+            const body = `Download the jar for this pull request: [${artifact.name}.zip](${link})`;
             core.info(`Adding a link to ${link}`);
             await updatePR(owner, repo, pull_request.number, "paperclip-pr-build", body);
