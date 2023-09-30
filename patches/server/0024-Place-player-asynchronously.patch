@@ -63,16 +63,19 @@ index 4de93de968a27ff8ac4aa7a4fe5d254644205229..63e7c899ca48ce4bf84d4ddf59121a5e
          // CraftBukkit start - Better rename detection
          if (nbttagcompound != null && nbttagcompound.contains("bukkit")) {
 diff --git a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
-index 58c8998ec05816a88b1df365485f1147c637f0d9..2c445bcdba31e469f1ba6f65fe9df157045e9461 100644
+index 58c8998ec05816a88b1df365485f1147c637f0d9..16cc082a612afcdaaac635b993a79ace81f7b509 100644
 --- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
 +++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
-@@ -182,6 +182,11 @@ public final class ShuviConfig {
+@@ -182,6 +182,14 @@ public final class ShuviConfig {
          }
      }
  
 +    public static boolean placePlayerAsync = false;
 +    private static void unsupportedSettings() {
 +        placePlayerAsync = getBoolean("settings.unsupported.async-player-login", placePlayerAsync);
++        if (placePlayerAsync) {
++            Bukkit.getLogger().log(Level.WARNING, "Unsupported option: 'async-player-login' is enabled. Login requests are accepted from the authenticate thread instead of main thread now.");
++        }
 +    }
 +
      /** @see <a href="https://bugs.mojang.com/browse/MC-26304">MC-26304</a> */
